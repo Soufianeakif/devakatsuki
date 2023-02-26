@@ -3,57 +3,58 @@ $servername = "localhost";
 $username = "root";
 $password = "";
 $dbname = "db_devakatsuki";
-// Create connection
-$conn = mysqli_connect($servername, $username, $password, $dbname);
 
-// Check connection
-if ($conn->connect_error) {
-  die("Connection failed: " . $conn->connect_error);
+// Create connection
+try {
+  $conn = new PDO("mysql:host=$servername;dbname=$dbname", $username, $password);
+  $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+  echo "Connected successfully";
+} catch(PDOException $e) {
+  die("Connection failed: " . $e->getMessage());
 }
-echo "Connected successfully";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST")
 {
-$nom = $_POST['nom'];
-$prenom = $_POST['prenom'];
-$email = $_POST['email'];
-$servicep = $_POST['servicep'];
-$motif = $_POST['motif'];
+    $nom = $_POST['nom'];
+    $prenom = $_POST['prenom'];
+    $email = $_POST['email'];
+    $servicep = $_POST['servicep'];
+    $motif = $_POST['motif'];
 
+    $stmt1 = $conn->prepare("SELECT * FROM client WHERE email= :email");
+    $stmt1->bindParam(':email', $email);
+    $stmt1->execute();
 
+    if ($stmt->rowCount() < 0) {
+        // email was found
+        echo '<script type="text/JavaScript"> 
+            if (window.confirm("Email déja exist! svp essayer autre email.")) {
+                window.location.href = "../add/index.php";
+            }
+            </script>';
+    } else {
+        // email was not found
+        $sql = "INSERT INTO client (nom, prenom, email, servicep, motif) VALUES (:nom, :prenom, :email, :servicep, :motif)";
+        $stmt = $conn->prepare($sql);
+        $stmt->bindParam(':nom', $nom);
+        $stmt->bindParam(':prenom', $prenom);
+        $stmt->bindParam(':email', $email);
+        $stmt->bindParam(':servicep', $servicep);
+        $stmt->bindParam(':motif', $motif);
 
-$result1 = mysqli_query($conn, "SELECT * FROM client WHERE email='soufiane4akif@gmail.com'");
-$row1 = mysqli_fetch_assoc($result1);
-
-
-if (mysqli_num_rows($result1) > 0) {
-    // email was found
-	echo '<script type="text/JavaScript"> 
-		if (window.confirm("Email déja exist! svp essayer autre email.")) {
-		  window.location.href = "../add/index.php";
-		}
-	  </script>';
-  } else {
-    // email was not found
-	$sql = "INSERT INTO client (nom, prenom, email, servicep, motif)
-	VALUES ('$nom', '$prenom', '$email', '$servicep', '$motif')";
-	if (mysqli_query($conn, $sql)) {
-		echo '<script type="text/JavaScript"> 
-		if (window.confirm("Client ajouté avec succès!")) {
-		  window.location.href = "../index.html";
-		}
-	  </script>';
-	} else {
-	  echo "Error: " . $sql . "<br>" . mysqli_error($conn);
-	}
-  }
-
-
-
-mysqli_close($conn);
+        if ($stmt->execute()) {
+            echo '<script type="text/JavaScript"> 
+            if (window.confirm("Client ajouté avec succès!")) {
+                window.location.href = "../index.html";
+            }
+            </script>';
+        } else {
+            echo "Error: " . $sql . "<br>" . $conn->errorInfo();
+        }
+    }
 }
 
-
+$conn = null;
 ?>
 <!DOCTYPE html>
 <html lang="en">

@@ -3,36 +3,37 @@ $servername = "localhost";
 $username = "root";
 $password = "";
 $dbname = "db_devakatsuki";
-// Create connection
-$conn = mysqli_connect($servername, $username, $password, $dbname);
 
-// Check connection
-if ($conn->connect_error) {
-  die("Connection failed: " . $conn->connect_error);
+try {
+  $conn = new PDO("mysql:host=$servername;dbname=$dbname", $username, $password);
+  $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+  echo "Connected successfully";
+} catch(PDOException $e) {
+  echo "Connection failed: " . $e->getMessage();
 }
-echo "Connected successfully";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST")
 {
-$email = $_POST['email'];
+  $email = $_POST['email'];
 
-$sql = "DELETE FROM client WHERE email='$email'";
+  $sql = "DELETE FROM client WHERE email=:email";
+  $stmt = $conn->prepare($sql);
+  $stmt->bindParam(':email', $email);
 
-if (mysqli_query($conn, $sql)) {
-	echo '<script type="text/JavaScript"> 
-	if (window.confirm("Client supprimé avec succès!")) {
-	  window.location.href = "../index.html";
-	}
-  </script>';
-} else {
-  echo "Error: " . $sql . "<br>" . mysqli_error($conn);
+  if ($stmt->execute()) {
+    echo '<script type="text/JavaScript"> 
+    if (window.confirm("Client supprimé avec succès!")) {
+      window.location.href = "../index.html";
+    }
+    </script>';
+  } else {
+    echo "Error: " . $sql . "<br>" . $stmt->errorInfo()[2];
+  }
+
+  $conn = null;
 }
-
-mysqli_close($conn);
-}
-
-
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
